@@ -1,0 +1,20 @@
+# Virtual environment — never push this
+venv/
+
+# Python cache files — auto-generated, not needed
+__pycache__/
+*.pyc
+*.pyo
+
+# Dataset — too large for GitHub (150MB+)
+data/
+
+# Logs — optional, teammates generate their own
+logs/
+
+# VS Code settings
+.vscode/
+
+# Windows system files
+Thumbs.db
+desktop.ini
