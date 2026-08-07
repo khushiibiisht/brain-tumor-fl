@@ -183,7 +183,10 @@ if __name__ == '__main__':
 
     # Connect to the Flower server and start FL
     # Server runs on localhost port 8080
+    import os
+    server_address = os.getenv('SERVER_ADDRESS', 'localhost:8080')
+    print(f'Connecting to server at: {server_address}')
     fl.client.start_numpy_client(
-        server_address='localhost:8080',
-        client=client
+    server_address=server_address,
+    client=client
     )

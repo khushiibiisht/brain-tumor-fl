@@ -1,0 +1,10 @@
+flwr==1.7.0
+matplotlib==3.11.1
+numpy==1.26.4
+pillow==12.2.0
+scikit-learn==1.9.0
+scipy==1.17.1
+tqdm==4.70.0
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1

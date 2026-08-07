@@ -1,0 +1,27 @@
+# Never copy these into Docker container
+
+# Virtual environment — huge, not needed
+venv/
+
+# Dataset — too large, mount as volume instead
+data/
+
+# Git files — not needed inside container
+.git/
+.gitignore
+
+# Python cache — auto-generated
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs — generated fresh each run
+logs/
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# VS Code settings
+.vscode/
