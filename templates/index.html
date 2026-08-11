@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}Predict — Brain Tumor FL{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero { text-align: center; padding: 40px 0 20px; }
+.hero h1 { font-size: 32px; color: #fff; margin-bottom: 8px; }
+.hero p { color: #718096; font-size: 16px; }
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+}
+.stat-card {
+    background: #1a1d2e;
+    border: 1px solid #2d3748;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+.stat-value { font-size: 28px; font-weight: 700; color: #1D9E75; }
+.stat-label { font-size: 13px; color: #718096; margin-top: 4px; }
+.upload-area {
+    border: 2px dashed #2d3748;
+    border-radius: 12px;
+    padding: 60px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #141722;
+}
+.upload-area:hover { border-color: #1D9E75; background: #0d1f18; }
+.upload-area.dragging { border-color: #1D9E75; background: #0d1f18; }
+.upload-icon { font-size: 48px; margin-bottom: 16px; }
+.upload-text { color: #718096; font-size: 15px; }
+.upload-text span { color: #1D9E75; }
+#preview-img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 8px;
+    margin: 16px auto;
+    display: none;
+    border: 1px solid #2d3748;
+}
+.result-card {
+    background: #0d3d2e;
+    border: 1px solid #1D9E75;
+    border-radius: 12px;
+    padding: 24px;
+    display: none;
+    margin-top: 20px;
+}
+.pred-label { font-size: 13px; color: #9ae6b4; margin-bottom: 6px; }
+.pred-value { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.pred-desc { font-size: 14px; color: #68d391; margin-bottom: 20px; }
+.prob-bar-wrap { margin-bottom: 12px; }
+.prob-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.prob-label span:first-child { color: #a0aec0; }
+.prob-label span:last-child { color: #1D9E75; font-weight: 600; }
+.prob-bar { height: 8px; background: #2d3748; border-radius: 4px; overflow: hidden; }
+.prob-fill { height: 100%; background: #1D9E75; border-radius: 4px; transition: width 0.5s; }
+.error-card {
+    background: #3d0d0d;
+    border: 1px solid #E24B4A;
+    border-radius: 12px;
+    padding: 16px 24px;
+    color: #fc8181;
+    display: none;
+    margin-top: 20px;
+}
+.loading { display: none; text-align: center; padding: 20px; color: #718096; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>🧠 Brain Tumor Detection</h1>
+    <p>Upload an MRI scan — our federated learning model will classify it</p>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-value">93.71%</div>
+        <div class="stat-label">FL Accuracy</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">4</div>
+        <div class="stat-label">Tumor Classes</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Hospital Clients</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">10</div>
+        <div class="stat-label">FL Rounds</div>
+    </div>
+</div>
+
+<div class="card">
+    <p class="card-title">Upload MRI Scan</p>
+    <div class="upload-area" id="upload-area"
+         onclick="document.getElementById('file-input').click()"
+         ondragover="handleDragOver(event)"
+         ondragleave="handleDragLeave(event)"
+         ondrop="handleDrop(event)">
+        <div class="upload-icon">🧬</div>
+        <p class="upload-text">Drag & drop your MRI scan here or <span>browse files</span></p>
+        <p style="color:#4a5568;font-size:13px;margin-top:8px;">Supports JPG, PNG</p>
+    </div>
+    <input type="file" id="file-input" accept="image/*"
+           style="display:none" onchange="handleFileSelect(event)">
+    <img id="preview-img" alt="MRI Preview">
+    <div style="text-align:center;margin-top:16px;">
+        <button class="btn btn-primary" onclick="predict()"
+                id="predict-btn" style="display:none;">
+            🔍 Analyse MRI Scan
+        </button>
+    </div>
+    <div class="loading" id="loading">⏳ Analysing MRI scan...</div>
+    <div class="result-card" id="result-card">
+        <p class="pred-label">PREDICTION</p>
+        <p class="pred-value" id="pred-class"></p>
+        <p class="pred-desc" id="pred-desc"></p>
+        <p class="pred-label">CONFIDENCE: <span id="pred-conf"
+           style="color:#fff;font-weight:700;"></span></p>
+        <div style="margin-top:20px;">
+            <p class="pred-label" style="margin-bottom:12px;">ALL CLASS PROBABILITIES</p>
+            <div id="prob-bars"></div>
+        </div>
+    </div>
+    <div class="error-card" id="error-card">
+        ❌ <span id="error-msg"></span>
+    </div>
+</div>
+
+<div class="card">
+    <p class="card-title">Tumor Classes</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+        <div style="padding:12px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#fc8181;font-weight:600;margin-bottom:4px;">🔴 Glioma</p>
+            <p style="font-size:13px;color:#718096;">Tumor in glial cells — most common brain tumor type</p>
+        </div>
+        <div style="padding:12px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#f6ad55;font-weight:600;margin-bottom:4px;">🟠 Meningioma</p>
+            <p style="font-size:13px;color:#718096;">Tumor on brain membranes — usually slow growing</p>
+        </div>
+        <div style="padding:12px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#68d391;font-weight:600;margin-bottom:4px;">🟢 No Tumor</p>
+            <p style="font-size:13px;color:#718096;">No tumor detected in the MRI scan</p>
+        </div>
+        <div style="padding:12px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#63b3ed;font-weight:600;margin-bottom:4px;">🔵 Pituitary</p>
+            <p style="font-size:13px;color:#718096;">Tumor in pituitary gland — affects hormones</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFile = null;
+
+function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('upload-area').classList.add('dragging');
+}
+function handleDragLeave(e) {
+    document.getElementById('upload-area').classList.remove('dragging');
+}
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-area').classList.remove('dragging');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadFile(file);
+}
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) loadFile(file);
+}
+function loadFile(file) {
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = document.getElementById('preview-img');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        document.getElementById('predict-btn').style.display = 'inline-block';
+        document.getElementById('result-card').style.display = 'none';
+        document.getElementById('error-card').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+async function predict() {
+    if (!selectedFile) return;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('predict-btn').style.display = 'none';
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('error-card').style.display = 'none';
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    try {
+        const response = await fetch('/predict', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.error) {
+            document.getElementById('error-msg').textContent = data.error;
+            document.getElementById('error-card').style.display = 'block';
+        } else {
+            document.getElementById('pred-class').textContent = data.prediction;
+            document.getElementById('pred-conf').textContent = data.confidence + '%';
+            document.getElementById('pred-desc').textContent = data.description;
+            const barsDiv = document.getElementById('prob-bars');
+            barsDiv.innerHTML = '';
+            for (const [cls, prob] of Object.entries(data.all_probabilities)) {
+                barsDiv.innerHTML += `
+                    <div class="prob-bar-wrap">
+                        <div class="prob-label">
+                            <span>${cls}</span><span>${prob}%</span>
+                        </div>
+                        <div class="prob-bar">
+                            <div class="prob-fill" style="width:${prob}%"></div>
+                        </div>
+                    </div>`;
+            }
+            document.getElementById('result-card').style.display = 'block';
+        }
+    } catch(e) {
+        document.getElementById('error-msg').textContent = 'Server error — please try again';
+        document.getElementById('error-card').style.display = 'block';
+    }
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('predict-btn').style.display = 'inline-block';
+}
+</script>
+{% endblock %}

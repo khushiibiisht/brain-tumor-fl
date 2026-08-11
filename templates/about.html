@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}About FL — Brain Tumor FL{% endblock %}
+
+{% block content %}
+<h1 style="font-size:28px;color:#fff;margin-bottom:8px;">About Federated Learning</h1>
+<p style="color:#718096;margin-bottom:24px;">How privacy-preserving AI works for medical imaging</p>
+
+<div class="card">
+    <p class="card-title">What is Federated Learning?</p>
+    <p style="color:#a0aec0;line-height:1.8;font-size:15px;">
+        Federated Learning (FL) is a machine learning approach where a model is trained
+        across multiple devices or servers holding local data samples, without exchanging
+        raw data. Each hospital trains the model locally and only shares model weight
+        updates — never patient MRI scans.
+    </p>
+</div>
+
+<div class="card">
+    <p class="card-title">Why it matters for medical AI</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="padding:16px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#1D9E75;font-weight:600;margin-bottom:8px;">🔒 Privacy</p>
+            <p style="font-size:13px;color:#718096;">Patient MRI scans never leave the hospital</p>
+        </div>
+        <div style="padding:16px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#9f7aea;font-weight:600;margin-bottom:8px;">🌍 Diversity</p>
+            <p style="font-size:13px;color:#718096;">Model learns from patients across multiple hospitals</p>
+        </div>
+        <div style="padding:16px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#63b3ed;font-weight:600;margin-bottom:8px;">⚡ Efficiency</p>
+            <p style="font-size:13px;color:#718096;">Only model weights (~44MB) transmitted — not raw images</p>
+        </div>
+        <div style="padding:16px;background:#141722;border-radius:8px;border:1px solid #2d3748;">
+            <p style="color:#f6ad55;font-weight:600;margin-bottom:8px;">🏥 Scalable</p>
+            <p style="font-size:13px;color:#718096;">Scales to hundreds of hospitals without centralizing data</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <p class="card-title">Project Details</p>
+    <table style="width:100%;font-size:14px;border-collapse:collapse;">
+        <tr><td style="color:#718096;padding:10px 0;width:200px;border-bottom:1px solid #2d3748;">Model</td>
+            <td style="color:#fff;border-bottom:1px solid #2d3748;">ResNet-18 (pretrained ImageNet)</td></tr>
+        <tr><td style="color:#718096;padding:10px 0;border-bottom:1px solid #2d3748;">FL Framework</td>
+            <td style="color:#fff;border-bottom:1px solid #2d3748;">Flower (flwr) v1.7.0</td></tr>
+        <tr><td style="color:#718096;padding:10px 0;border-bottom:1px solid #2d3748;">Strategy</td>
+            <td style="color:#fff;border-bottom:1px solid #2d3748;">FedAvg + FedProx + FedBN</td></tr>
+        <tr><td style="color:#718096;padding:10px 0;border-bottom:1px solid #2d3748;">Dataset</td>
+            <td style="color:#fff;border-bottom:1px solid #2d3748;">Brain Tumor MRI — 5600 images, 4 classes</td></tr>
+        <tr><td style="color:#718096;padding:10px 0;border-bottom:1px solid #2d3748;">Best Accuracy</td>
+            <td style="color:#1D9E75;font-weight:600;border-bottom:1px solid #2d3748;">93.71% (Round 9)</td></tr>
+        <tr><td style="color:#718096;padding:10px 0;border-bottom:1px solid #2d3748;">Deployment</td>
+            <td style="color:#fff;border-bottom:1px solid #2d3748;">Docker + Flask</td></tr>
+        <tr><td style="color:#718096;padding:10px 0;">Institution</td>
+            <td style="color:#fff;">DAVIET, Jalandhar — B.Tech CSE (AI/ML)</td></tr>
+    </table>
+</div>
+{% endblock %}

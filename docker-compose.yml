@@ -1,125 +1,73 @@
-# docker-compose.yml
-# Runs the complete FL system with ONE command:
-# docker-compose up --build
-#
-# Starts 4 containers simultaneously:
-#   fl-server  → central aggregator (server.py)
-#   fl-client0 → hospital 0 (client.py 0)
-#   fl-client1 → hospital 1 (client.py 1)
-#   fl-client2 → hospital 2 (client.py 2)
-
-version: '3.8'
-
 services:
 
-  # ── FL SERVER ──────────────────────────────────
   fl-server:
     build: .
     container_name: fl-server
     command: python server.py
-
-    # Expose port 8080 so clients can connect
     ports:
       - "8080:8080"
-
-    # Mount local folders into container
-    # Changes here reflect immediately without rebuild
     volumes:
-      - ./logs:/app/logs    # save results.json locally
-      - ./data:/app/data    # share dataset with container
-
-    # All containers talk on this private network
+      - ./logs:/app/logs
+      - ./data:/app/data
     networks:
       - fl-network
-
-    # Restart if it crashes
     restart: on-failure
 
-  # ── HOSPITAL CLIENT 0 ──────────────────────────
   fl-client0:
     build: .
     container_name: fl-client0
     command: python client.py 0
-
     environment:
-      # Tell client to connect to fl-server container
-      # not localhost — containers have their own network
       - SERVER_ADDRESS=fl-server:8080
-
     volumes:
       - ./data:/app/data
-
     networks:
       - fl-network
-
-    # Wait for server to be running before starting
     depends_on:
       - fl-server
-
     restart: on-failure
 
-  # ── HOSPITAL CLIENT 1 ──────────────────────────
   fl-client1:
     build: .
     container_name: fl-client1
     command: python client.py 1
-
     environment:
       - SERVER_ADDRESS=fl-server:8080
-
     volumes:
       - ./data:/app/data
-
     networks:
       - fl-network
-
     depends_on:
       - fl-server
-
     restart: on-failure
 
-  # ── HOSPITAL CLIENT 2 ──────────────────────────
   fl-client2:
     build: .
     container_name: fl-client2
     command: python client.py 2
-
     environment:
       - SERVER_ADDRESS=fl-server:8080
-
     volumes:
       - ./data:/app/data
-
     networks:
       - fl-network
-
     depends_on:
       - fl-server
-
     restart: on-failure
 
-  # ── STREAMLIT UI ───────────────────────────────
   fl-ui:
     build: .
     container_name: fl-ui
-    command: streamlit run app.py --server.port 8501
-
+    command: python app.py
     ports:
-      - "8501:8501"   # access UI at http://localhost:8501
-
+      - "5000:5000"
     volumes:
-      - ./logs:/app/logs    # reads results.json for graphs
-      - ./data:/app/data    # reads test images for prediction
-
+      - ./logs:/app/logs
+      - ./data:/app/data
     networks:
       - fl-network
-
-    # UI can start anytime — doesn't need FL server
     restart: on-failure
 
-# Private network connecting all containers
-# Containers reference each other by service name
-# e.g. fl-server:8080 not localhost:8080
 networks:
   fl-network:
     driver: bridge

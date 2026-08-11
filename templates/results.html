@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Results — Brain Tumor FL{% endblock %}
+
+{% block extra_css %}
+<style>
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.metric { text-align: center; }
+.metric-value { font-size: 32px; font-weight: 700; color: #1D9E75; }
+.metric-label { font-size: 13px; color: #718096; margin-top: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { padding: 10px 16px; text-align: left; color: #718096;
+     border-bottom: 1px solid #2d3748; font-weight: 500; }
+td { padding: 10px 16px; border-bottom: 1px solid #1a2332; }
+tr:hover td { background: #1a2332; }
+.best { color: #1D9E75; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="font-size:28px;color:#fff;margin-bottom:8px;">Training Results</h1>
+<p style="color:#718096;margin-bottom:24px;">
+    Federated Learning — ResNet-18 across 3 hospital clients
+</p>
+
+<div class="card">
+    <div class="results-grid">
+        <div class="metric">
+            <div class="metric-value">93.71%</div>
+            <div class="metric-label">Best Accuracy (Round 9)</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">91.45%</div>
+            <div class="metric-label">Average Accuracy</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">10</div>
+            <div class="metric-label">FL Rounds</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <p class="card-title">Accuracy over FL Rounds</p>
+    <canvas id="accuracy-chart" height="80"></canvas>
+</div>
+
+<div class="card">
+    <p class="card-title">Loss over FL Rounds</p>
+    <canvas id="loss-chart" height="80"></canvas>
+</div>
+
+<div class="card">
+    <p class="card-title">Round-by-Round Results</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Round</th>
+                <th>Accuracy</th>
+                <th>Loss</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="results-table"></tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+async function loadResults() {
+    const response = await fetch('/api/results');
+    const data = await response.json();
+    if (!data.FedAvg) return;
+    const r = data.FedAvg;
+    const rounds = r.rounds;
+    const accuracy = r.accuracy;
+    const loss = r.loss;
+
+    new Chart(document.getElementById('accuracy-chart'), {
+        type: 'line',
+        data: {
+            labels: rounds,
+            datasets: [{
+                label: 'Global Accuracy (%)',
+                data: accuracy,
+                borderColor: '#1D9E75',
+                backgroundColor: 'rgba(29,158,117,0.1)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#1D9E75',
+                pointBorderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            plugins: { legend: { labels: { color: '#a0aec0' } } },
+            scales: {
+                x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#718096' }, grid: { color: '#2d3748' }, min: 80, max: 100 }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('loss-chart'), {
+        type: 'line',
+        data: {
+            labels: rounds,
+            datasets: [{
+                label: 'Global Loss',
+                data: loss,
+                borderColor: '#9f7aea',
+                backgroundColor: 'rgba(159,122,234,0.1)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#9f7aea',
+                pointBorderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            plugins: { legend: { labels: { color: '#a0aec0' } } },
+            scales: {
+                x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
+                y: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } }
+            }
+        }
+    });
+
+    const best = Math.max(...accuracy);
+    const tbody = document.getElementById('results-table');
+    rounds.forEach((r, i) => {
+        const isBest = accuracy[i] === best;
+        tbody.innerHTML += `
+            <tr>
+                <td>${r}</td>
+                <td class="${isBest ? 'best' : ''}">${accuracy[i]}% ${isBest ? '⭐' : ''}</td>
+                <td>${loss[i]}</td>
+                <td><span style="color:#1D9E75">✓ Complete</span></td>
+            </tr>`;
+    });
+}
+loadResults();
+</script>
+{% endblock %}
