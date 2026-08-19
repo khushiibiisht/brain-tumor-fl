@@ -2,7 +2,7 @@
 
 A privacy-preserving brain tumor classification system using 
 Federated Learning. Patient MRI data never leaves individual 
-hospital nodes — only model weights are shared.
+hospital nodes —  model weights are shared only .
 
 ## Project Structure
 
