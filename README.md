@@ -82,7 +82,6 @@ python client.py 2
 
 ## FL Strategy
 - FedAvg (baseline)
-- FedProx (handles unequal data)
-- FedBN (handles scanner heterogeneity)
+
 
 ## Team
