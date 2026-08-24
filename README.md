@@ -20,7 +20,7 @@ brain-tumor-fl/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/khushiibisht/brain-tumor-fl.git
+git clone https://github.com/khushiibiisht/brain-tumor-fl.git
 cd brain-tumor-fl
 ```
 
